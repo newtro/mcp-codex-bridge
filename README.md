@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.png" alt="MCP Codex Bridge" width="100%" />
+</p>
+
 # mcp-codex-bridge
 
 An MCP server that wraps the [Codex CLI](https://github.com/openai/codex) as four callable tools so Claude Code (or any MCP-aware client) can invoke Codex inline as a critic, second opinion, or implementer. Uses your existing ChatGPT subscription auth via the Codex CLI; no OpenAI API key required, no per-token cost.
@@ -178,9 +182,9 @@ Architectural decisions (subprocess over API, four-tool surface, error classific
 
 ## Related reading
 
-- [Wiring Agents to Each Other (42 Insights, Substack)](https://open.substack.com/pub/jnycode/p/wiring-agents-to-each-other?r=3x6reh&utm_campaign=post&utm_medium=web&showWelcomeOnShare=true) — the cross-provider adversarial audit argument that motivated this bridge.
-- [Model Context Protocol](https://modelcontextprotocol.io) — the open standard this server speaks.
-- [Codex CLI](https://github.com/openai/codex) — the upstream tool this bridge wraps.
+- [Wiring Agents to Each Other (42 Insights, Substack)](https://open.substack.com/pub/jnycode/p/wiring-agents-to-each-other?r=3x6reh&utm_campaign=post&utm_medium=web&showWelcomeOnShare=true): the cross-provider adversarial audit argument that motivated this bridge.
+- [Model Context Protocol](https://modelcontextprotocol.io): the open standard this server speaks.
+- [Codex CLI](https://github.com/openai/codex): the upstream tool this bridge wraps.
 
 ## License
 
