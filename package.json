@@ -50,6 +50,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sesmith2k/mcp-codex-bridge.git"
-  }
+    "url": "git+https://github.com/newtro/mcp-codex-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/newtro/mcp-codex-bridge/issues"
+  },
+  "homepage": "https://github.com/newtro/mcp-codex-bridge#readme"
 }

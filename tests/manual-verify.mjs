@@ -102,25 +102,19 @@ async function main() {
 +export function greet(name: string) {
 +  return \`Hello \${name}\`;
 }`;
+  const reviewArgs = {
+    diff: sampleDiff,
+    focus_areas: ['type safety', 'edge cases'],
+    context: 'Migrating a JavaScript greet function to TypeScript with template literals.',
+  };
   send({
     jsonrpc: '2.0',
     id: 12,
     method: 'tools/call',
-    params: {
-      name: 'codex_review',
-      arguments: {
-        diff: sampleDiff,
-        focus_areas: ['type safety', 'edge cases'],
-        context: 'Migrating a JavaScript greet function to TypeScript with template literals.',
-      },
-    },
+    params: { name: 'codex_review', arguments: reviewArgs },
   });
   const reviewRes = await awaitResponse(12);
-  transcripts.push({
-    tool: 'codex_review',
-    input: { diff: sampleDiff, focus_areas: ['type safety', 'edge cases'], context: 'migration to TS' },
-    output: reviewRes.result,
-  });
+  transcripts.push({ tool: 'codex_review', input: reviewArgs, output: reviewRes.result });
 
   // 5) codex_implement (in a throwaway tmp dir)
   console.log('Calling codex_implement...');
@@ -134,25 +128,19 @@ async function main() {
     const g = spawn('git', ['commit', '--allow-empty', '-m', 'baseline'], { cwd: tmpRepo });
     g.on('close', () => res());
   });
+  const implementArgs = {
+    spec: 'Create a file named hello.txt containing exactly the text: hello world (no newline at end is fine).',
+    working_directory: tmpRepo,
+    approval_mode: 'workspace-write',
+  };
   send({
     jsonrpc: '2.0',
     id: 13,
     method: 'tools/call',
-    params: {
-      name: 'codex_implement',
-      arguments: {
-        spec: 'Create a file named hello.txt containing exactly the text: hello world (no newline at end is fine).',
-        working_directory: tmpRepo,
-        approval_mode: 'workspace-write',
-      },
-    },
+    params: { name: 'codex_implement', arguments: implementArgs },
   });
   const implRes = await awaitResponse(13);
-  transcripts.push({
-    tool: 'codex_implement',
-    input: { spec: 'create hello.txt with "hello world"', working_directory: tmpRepo, approval_mode: 'workspace-write' },
-    output: implRes.result,
-  });
+  transcripts.push({ tool: 'codex_implement', input: implementArgs, output: implRes.result });
 
   // Cleanup tmp repo.
   try {
