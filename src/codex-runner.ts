@@ -1,5 +1,20 @@
-import spawn from 'cross-spawn';
+import crossSpawn from 'cross-spawn';
 import type { ChildProcessWithoutNullStreams } from 'node:child_process';
+
+// The spawn function is held in a module-level variable so tests can inject
+// a fake without forcing the production code to use vi.mock hoisting tricks.
+// Production code never reassigns this; only the _setSpawnForTests export
+// (named with an underscore to discourage non-test consumers) does.
+type SpawnFn = (command: string, args: readonly string[], opts?: unknown) => ChildProcessWithoutNullStreams;
+let spawn: SpawnFn = crossSpawn as unknown as SpawnFn;
+
+export function _setSpawnForTests(fn: SpawnFn): void {
+  spawn = fn;
+}
+
+export function _resetSpawnForTests(): void {
+  spawn = crossSpawn as unknown as SpawnFn;
+}
 import {
   looksLikeAuthFailure,
   looksLikeRateLimit,

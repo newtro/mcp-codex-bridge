@@ -14,16 +14,18 @@ export interface StatusResult {
   warnings: string[];
 }
 
-const CODEX_CONFIG_DIR = process.env.CODEX_HOME ?? path.join(os.homedir(), '.codex');
-
 /**
  * Codex stores its default model in ~/.codex/config.toml as `model = "..."`.
  * A full TOML parser is overkill for a single key, and pinning a real parser
  * would add a transitive dependency just to read one line. The narrow regex
  * tolerates surrounding whitespace, quote style, and comments.
+ *
+ * CODEX_HOME is resolved on each call so tests and runtime overrides take
+ * effect after module load.
  */
 async function readDefaultModel(): Promise<string | null> {
-  const configPath = path.join(CODEX_CONFIG_DIR, 'config.toml');
+  const codexHome = process.env.CODEX_HOME ?? path.join(os.homedir(), '.codex');
+  const configPath = path.join(codexHome, 'config.toml');
   let content: string;
   try {
     content = await fs.readFile(configPath, 'utf8');
