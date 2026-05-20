@@ -1,0 +1,53 @@
+{
+  "name": "mcp-codex-bridge",
+  "version": "0.1.0",
+  "description": "MCP server that wraps the Codex CLI as callable tools (review, implement, ask, status) for Claude Code and any MCP-aware client. Uses the user's existing ChatGPT subscription auth via subprocess. No API key required.",
+  "license": "MIT",
+  "author": "Scott Smith",
+  "type": "module",
+  "bin": {
+    "mcp-codex-bridge": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "RUN_INTEGRATION=1 vitest run tests/integration.real-codex.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "codex",
+    "openai",
+    "claude-code",
+    "model-context-protocol",
+    "subprocess",
+    "bridge"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scott/mcp-codex-bridge"
+  }
+}
