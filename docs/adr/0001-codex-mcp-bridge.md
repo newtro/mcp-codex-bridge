@@ -9,13 +9,13 @@ The goal is an MCP server that lets Claude Code call Codex inline as a critic, s
 
 ## Prior Art Evaluation
 
-Searched npm and GitHub for existing Codex MCP servers in May 2026.
+Searched npm and GitHub for existing Codex MCP servers on 2026-05-20.
 
-| Project | Approach | Tools | Fit for this use case |
-|---------|----------|-------|------------------------|
-| `codex-mcp-server` (tuannvm, v1.4.10) | Subprocess to Codex CLI | `codex`, `review`, `websearch`, `listSessions`, `ping`, `help` | Close, with general-purpose session management focus |
-| `codex mcp-server` (built-in Codex subcommand) | Codex CLI exposes itself as an MCP server | Codex's agentic surface as a single tool | Too coarse-grained for inline second-opinion calls |
-| `claude-codex-dialog` (LobeHub) | Older proof of concept | Limited | Stale |
+| Project | Source | Approach | Tools | Fit for this use case |
+|---------|--------|----------|-------|------------------------|
+| `codex-mcp-server` v1.4.10 (tuannvm) | https://www.npmjs.com/package/codex-mcp-server / https://github.com/tuannvm/codex-mcp-server | Subprocess to Codex CLI | `codex`, `review`, `websearch`, `listSessions`, `ping`, `help` | Close, with general-purpose session management focus |
+| `codex mcp-server` (built-in Codex subcommand) | https://github.com/openai/codex (verified locally: `codex mcp-server --help`) | Codex CLI exposes itself as an MCP server | Codex's agentic surface as a single tool | Too coarse-grained for inline second-opinion calls |
+| `claude-codex-dialog` | https://lobehub.com/mcp/clptvn-claude-codex-dialog | Older proof of concept | Limited | Stale |
 
 `tuannvm/codex-mcp-server` is the closest existing project. Its tool surface centers on long-running sessions with model selection. The brief here is different: focused single-shot calls from Claude Code with sandbox defaults that vary per tool, structured error classes with actionable remediation text, and ChatGPT-subscription auth only.
 
