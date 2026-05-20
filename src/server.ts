@@ -4,7 +4,7 @@ import type { RunCodexResult } from './codex-runner.js';
 import { formatStatus, getStatus } from './tools/status.js';
 import { runAsk } from './tools/ask.js';
 import { runReview } from './tools/review.js';
-import { runImplement } from './tools/implement.js';
+import { runImplement, type ImplementResult } from './tools/implement.js';
 
 export const SERVER_NAME = 'mcp-codex-bridge';
 export const SERVER_VERSION = '0.1.0';
@@ -143,7 +143,7 @@ export function createServer(): McpServer {
     async (args) => {
       try {
         const result = await runImplement(args);
-        return toolResultFromCodex(result);
+        return implementResultToToolResult(result);
       } catch (err) {
         // Validation errors from runImplement (e.g., missing working_directory)
         // never reach Codex; they surface here. The handler turns them into a
@@ -157,4 +157,32 @@ export function createServer(): McpServer {
   );
 
   return server;
+}
+
+function implementResultToToolResult(result: ImplementResult): {
+  content: { type: 'text'; text: string }[];
+  isError?: boolean;
+} {
+  const base = toolResultFromCodex(result.codex);
+  // Append an objective post-run summary so the calling agent has a source
+  // of truth independent of Codex's self-reported description.
+  const lines: string[] = [];
+  if (result.filesChanged === null) {
+    lines.push('Post-run git probe: unavailable (not a git repo, git missing, or probe failed).');
+  } else if (result.filesChanged.length === 0) {
+    lines.push('Post-run git probe: no files changed since HEAD.');
+  } else {
+    lines.push(`Post-run git probe: ${result.filesChanged.length} file(s) changed since HEAD:`);
+    for (const f of result.filesChanged) lines.push(`  - ${f}`);
+  }
+  if (result.diffStat && result.diffStat.length > 0) {
+    lines.push('');
+    lines.push('git diff --stat HEAD:');
+    lines.push(result.diffStat);
+  }
+  const appendage = '\n\n---\n' + lines.join('\n');
+  const merged = base.content.map((c, i) =>
+    i === 0 ? { ...c, text: c.text + appendage } : c,
+  );
+  return { ...base, content: merged };
 }
