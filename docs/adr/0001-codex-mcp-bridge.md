@@ -5,7 +5,7 @@ Status: Accepted
 
 ## Context
 
-The goal is an MCP server that lets Claude Code call Codex inline as a critic, second opinion, or implementer for specific subtasks. The user has a ChatGPT Plus subscription and wants to use that auth, not an OpenAI API key, so per-token cost is zero.
+The goal is an MCP server that lets Claude Code call Codex inline as a critic, second opinion, or implementer for specific subtasks. The user has a ChatGPT Plus subscription and wants to use that subscription auth, keeping per-token cost at zero.
 
 ## Prior Art Evaluation
 
@@ -21,11 +21,11 @@ Searched npm and GitHub for existing Codex MCP servers in May 2026.
 
 A fresh implementation is cheaper than carving down the existing project and lets the error and logging layer be designed for the four-tool shape from the start.
 
-## Decision: Subprocess to `codex exec --json`, not the OpenAI API
+## Decision: Subprocess to `codex exec --json`
 
-The user's auth lives in the Codex CLI's stored credentials (browser OAuth flow against ChatGPT Plus). Calling the OpenAI Responses or Chat Completions API directly would require an API key that the user does not want to provision and would bill against a different budget. Subprocess to the CLI keeps auth out of this package entirely; the CLI handles token refresh and subscription routing.
+The user's auth lives in the Codex CLI's stored credentials (browser OAuth flow against ChatGPT Plus). The OpenAI Responses or Chat Completions API was rejected because it would require an API key the user does not want to provision and would bill against a different budget. Subprocess to the CLI keeps auth out of this package entirely; the CLI handles token refresh and subscription routing.
 
-Trade-off: subprocess start-up cost on every call (cold start of the Codex CLI, typically a few hundred milliseconds). Acceptable because these are inline calls from another agent, not a hot path.
+Trade-off: subprocess start-up cost on every call (cold start of the Codex CLI, typically a few hundred milliseconds). Acceptable because these are inline calls from another agent for occasional second opinions and reviews, well outside a hot path.
 
 Codex CLI 0.132.0 supports `codex exec --json`, which emits JSONL events to stdout including the final assistant message. That gives a parseable interface to structured output without screen-scraping a TUI.
 
@@ -66,7 +66,7 @@ Stdout is reserved for the MCP protocol itself (this is a stdio transport).
 ## Decision: Stack
 
 - TypeScript with `tsc` compilation to ESM, Node 20+.
-- `@modelcontextprotocol/sdk` ^1.29 for the MCP server primitives. Validated against the installed type definitions before adopting.
+- `@modelcontextprotocol/sdk` ^1.24 (currently resolves to 1.29) for the MCP server primitives. Validated against the installed type definitions before adopting.
 - `zod` ^3.25 for input validation. The SDK's `registerTool` accepts a Zod raw shape directly.
 - `vitest` for tests because it integrates cleanly with the TypeScript ESM setup and has a working `vi.mock` for `child_process`.
 

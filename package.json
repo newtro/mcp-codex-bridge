@@ -12,7 +12,6 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "README.md",
     "LICENSE",
     "docs"
   ],
@@ -24,7 +23,7 @@
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "RUN_INTEGRATION=1 vitest run tests/integration.real-codex.test.ts",
+    "test:integration": "cross-env RUN_INTEGRATION=1 vitest run tests/integration.real-codex.test.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -42,12 +41,13 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "cross-env": "^7.0.3",
     "tsx": "^4.20.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/scott/mcp-codex-bridge"
+    "url": "git+https://github.com/sesmith2k/mcp-codex-bridge.git"
   }
 }
