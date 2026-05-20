@@ -8,11 +8,26 @@ import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 type SpawnFn = (command: string, args: readonly string[], opts?: unknown) => ChildProcessWithoutNullStreams;
 let spawn: SpawnFn = crossSpawn as unknown as SpawnFn;
 
+function assertTestContext(name: string): void {
+  // The injection setters are public exports because the test harness loads
+  // codex-runner as a normal ESM module. Throwing here when NODE_ENV is not
+  // 'test' (vitest sets this automatically) keeps the foot-gun closed for any
+  // production consumer that imports the module out of curiosity.
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error(
+      `${name} is a test-only export. NODE_ENV must be 'test' to call it. ` +
+        'If you are running production code, do not import the underscore-prefixed exports from codex-runner.',
+    );
+  }
+}
+
 export function _setSpawnForTests(fn: SpawnFn): void {
+  assertTestContext('_setSpawnForTests');
   spawn = fn;
 }
 
 export function _resetSpawnForTests(): void {
+  assertTestContext('_resetSpawnForTests');
   spawn = crossSpawn as unknown as SpawnFn;
 }
 import {
