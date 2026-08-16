@@ -1,75 +1,80 @@
-/**
- * Codex CLI failure modes that the calling agent needs to distinguish.
- * Every class includes a `userAction` so the agent can decide whether to
- * retry, fall back, or escalate to the human without having to inspect
- * raw stderr.
- */
-export type CodexErrorClass =
-  | 'CODEX_NOT_FOUND'
-  | 'CODEX_NOT_AUTHENTICATED'
-  | 'CODEX_RATE_LIMITED'
-  | 'CODEX_TIMEOUT'
-  | 'CODEX_PARSE_ERROR'
-  | 'CODEX_FAILED';
+import type { CliProvider, ErrorKind } from './providers/types.js';
 
-export interface CodexFailure {
+/**
+ * CLI failure modes the calling agent needs to distinguish. Every class
+ * carries a `userAction` so the agent can decide whether to retry, fall back
+ * to another reviewer, or escalate to the human without inspecting raw
+ * stderr.
+ *
+ * Classes are namespaced per provider (CODEX_TIMEOUT, GROK_TIMEOUT) so a
+ * caller running several CLIs in parallel can tell which one degraded. The
+ * CODEX_* spellings are unchanged from the single-provider version of this
+ * bridge, so existing consumers keep working.
+ */
+export type CodexErrorClass = `CODEX_${ErrorKind}`;
+export type GrokErrorClass = `GROK_${ErrorKind}`;
+export type CliErrorClass = CodexErrorClass | GrokErrorClass;
+
+export interface CliFailure {
   ok: false;
-  errorClass: CodexErrorClass;
+  errorClass: CliErrorClass;
   message: string;
   userAction: string;
   stderr: string;
   exitCode: number | null;
 }
 
-const USER_ACTIONS: Record<CodexErrorClass, string> = {
-  CODEX_NOT_FOUND:
-    'Install Codex CLI (https://github.com/openai/codex) or set CODEX_CLI_PATH to its absolute path.',
-  CODEX_NOT_AUTHENTICATED:
-    'Run `codex login` to sign in with your ChatGPT account, then retry.',
-  CODEX_RATE_LIMITED:
-    'Wait a few minutes and retry. If this persists, check your ChatGPT plan usage limits.',
-  CODEX_TIMEOUT:
-    'Retry with a larger timeout (CODEX_MCP_TIMEOUT_MS env var, or per-call timeout_ms argument), or break the request into smaller steps.',
-  CODEX_PARSE_ERROR:
-    'The Codex CLI emitted output this bridge could not parse. Run `codex --version` to check for a CLI upgrade; the bridge may need updating to match a new event schema.',
-  CODEX_FAILED:
-    'Read the stderr field for the underlying error message from Codex itself.',
-};
+/** Retained under the original name so downstream imports do not break. */
+export type CodexFailure = CliFailure;
+
+function userActionFor(provider: CliProvider, kind: ErrorKind): string {
+  switch (kind) {
+    case 'NOT_FOUND':
+      return provider.installHint;
+    case 'NOT_AUTHENTICATED':
+      return provider.loginHint;
+    case 'RATE_LIMITED':
+      return `Wait a few minutes and retry. If this persists, check your ${provider.displayName} plan usage limits.`;
+    case 'TIMEOUT':
+      return `Retry with a larger timeout (${provider.timeoutEnvVar} env var, or per-call timeout_ms argument), or break the request into smaller steps.`;
+    case 'PARSE_ERROR':
+      return provider.parseErrorHint;
+    case 'FAILED':
+      return `Read the stderr field for the underlying error message from ${provider.displayName} itself.`;
+  }
+}
 
 export function makeFailure(
-  errorClass: CodexErrorClass,
+  provider: CliProvider,
+  kind: ErrorKind,
   message: string,
   stderr = '',
   exitCode: number | null = null,
-): CodexFailure {
+): CliFailure {
   return {
     ok: false,
-    errorClass,
+    errorClass: `${provider.errorPrefix}_${kind}` as CliErrorClass,
     message,
-    userAction: USER_ACTIONS[errorClass],
+    userAction: userActionFor(provider, kind),
     stderr,
     exitCode,
   };
 }
 
-/**
- * Codex prints "Not logged in" style messages to stderr when auth is missing.
- * The exact string has shifted across CLI versions, so the detector matches
- * against several known patterns to stay resilient to upstream wording changes.
- */
-const AUTH_PATTERNS: RegExp[] = [
-  /not\s+logged\s*in/i,
-  /please\s+(?:run\s+)?["']?codex\s+login["']?/i,
-  /authentication\s+(?:failed|required)/i,
-  /no\s+(?:credentials|auth\s+token)/i,
-  /401\s+unauthorized/i,
-];
-
-export function looksLikeAuthFailure(stderr: string, stdout: string): boolean {
+export function looksLikeAuthFailure(
+  provider: CliProvider,
+  stderr: string,
+  stdout: string,
+): boolean {
   const haystack = `${stderr}\n${stdout}`;
-  return AUTH_PATTERNS.some((pat) => pat.test(haystack));
+  return provider.authPatterns.some((pat) => pat.test(haystack));
 }
 
+/**
+ * Rate-limit wording is close enough across vendors that a shared pattern set
+ * is more maintainable than per-provider copies. If a provider ever needs its
+ * own, promote this to the CliProvider interface the way authPatterns is.
+ */
 const RATE_LIMIT_PATTERNS: RegExp[] = [
   /rate[\s-]?limit/i,
   /quota\s+exceeded/i,

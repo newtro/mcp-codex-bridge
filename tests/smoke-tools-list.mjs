@@ -41,7 +41,16 @@ setTimeout(() => {
     process.exit(1);
   }
   const names = toolsListResp.result.tools.map((t) => t.name).sort();
-  const expected = ['codex_ask', 'codex_implement', 'codex_review', 'codex_status'];
+  const expected = [
+    'codex_ask',
+    'codex_implement',
+    'codex_review',
+    'codex_status',
+    'grok_ask',
+    'grok_implement',
+    'grok_review',
+    'grok_status',
+  ];
   if (names.join(',') !== expected.join(',')) {
     console.error(`FAIL: tool names mismatch. expected=${expected.join(',')} actual=${names.join(',')}`);
     process.exit(1);
@@ -60,6 +69,6 @@ setTimeout(() => {
     process.exit(1);
   }
 
-  console.log(`OK: 4 tools registered (${names.join(',')}); codex_status call returned ${text.length} chars`);
+  console.log(`OK: ${names.length} tools registered (${names.join(',')}); codex_status call returned ${text.length} chars`);
   process.exit(0);
 }, 20000);

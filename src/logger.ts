@@ -1,11 +1,14 @@
-import type { CodexErrorClass } from './errors.js';
+import type { CliErrorClass } from './errors.js';
+import type { ProviderId } from './providers/types.js';
 
 export interface LogEntry {
   ts: string;
+  /** Which CLI backend handled the call. Absent on server-level events. */
+  provider?: ProviderId;
   tool: string;
   durationMs: number;
   exitCode: number | null;
-  errorClass: CodexErrorClass | 'OK';
+  errorClass: CliErrorClass | 'OK';
   argSummary: Record<string, unknown>;
 }
 

@@ -1,12 +1,16 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { runCodex, type RunCodexResult } from '../codex-runner.js';
+import { runCli, type RunCliResult } from '../cli-runner.js';
+import { getProvider } from '../providers/index.js';
+import type { ProviderId } from '../providers/types.js';
 
 export interface AskInput {
   prompt: string;
   working_directory?: string;
   context_files?: string[];
   timeout_ms?: number;
+  model?: string;
+  reasoning_effort?: string;
 }
 
 const MAX_CONTEXT_BYTES_PER_FILE = 64 * 1024;
@@ -43,14 +47,19 @@ export async function composeAskPrompt(input: AskInput): Promise<string> {
   return parts.join('\n');
 }
 
-export async function runAsk(input: AskInput): Promise<RunCodexResult> {
+export async function runAsk(
+  input: AskInput,
+  providerId: ProviderId = 'codex',
+): Promise<RunCliResult> {
   const composed = await composeAskPrompt(input);
-  return runCodex({
-    tool: 'codex_ask',
+  return runCli(getProvider(providerId), {
+    tool: `${providerId}_ask`,
     prompt: composed,
     cwd: input.working_directory,
     sandbox: 'read-only',
     skipGitCheck: true,
+    model: input.model,
+    reasoningEffort: input.reasoning_effort,
     timeoutMs: input.timeout_ms,
   });
 }

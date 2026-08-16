@@ -1,7 +1,7 @@
 {
   "name": "mcp-codex-bridge",
-  "version": "0.1.0",
-  "description": "MCP server that wraps the Codex CLI as callable tools (review, implement, ask, status) for Claude Code and any MCP-aware client. Uses the user's existing ChatGPT subscription auth via subprocess. No API key required.",
+  "version": "0.2.0",
+  "description": "MCP server that wraps subscription-authenticated coding CLIs (Codex, Grok Build) as callable tools (review, implement, ask, status) for Claude Code and any MCP-aware client. Uses the user's existing subscription auth via subprocess. No API key required.",
   "license": "MIT",
   "author": "Scott Smith",
   "type": "module",
@@ -30,6 +30,8 @@
     "mcp",
     "codex",
     "openai",
+    "grok",
+    "xai",
     "claude-code",
     "model-context-protocol",
     "subprocess",

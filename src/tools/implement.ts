@@ -1,5 +1,7 @@
 import crossSpawn from 'cross-spawn';
-import { runCodex, type RunCodexResult, type SandboxMode } from '../codex-runner.js';
+import { runCli, type RunCliResult } from '../cli-runner.js';
+import { getProvider } from '../providers/index.js';
+import type { ProviderId, SandboxMode } from '../providers/types.js';
 
 export interface ImplementInput {
   spec: string;
@@ -7,10 +9,13 @@ export interface ImplementInput {
   files_in_scope?: string[];
   approval_mode?: SandboxMode;
   timeout_ms?: number;
+  model?: string;
+  reasoning_effort?: string;
 }
 
 export interface ImplementResult {
-  codex: RunCodexResult;
+  /** Named `codex` for backward compatibility; holds whichever CLI ran. */
+  codex: RunCliResult;
   /**
    * Files modified, observed via `git diff --name-only HEAD` after the run.
    * `null` means git was not available, the directory was not a repo, or the
@@ -114,23 +119,29 @@ export function composeImplementPrompt(input: ImplementInput): string {
   return parts.join('\n');
 }
 
-export async function runImplement(input: ImplementInput): Promise<ImplementResult> {
+export async function runImplement(
+  input: ImplementInput,
+  providerId: ProviderId = 'codex',
+): Promise<ImplementResult> {
+  const provider = getProvider(providerId);
   if (!input.working_directory || input.working_directory.trim() === '') {
     throw new Error(
-      "codex_implement requires 'working_directory' so Codex knows which checkout to modify. Pass the absolute path of the target repository.",
+      `${providerId}_implement requires 'working_directory' so ${provider.displayName} knows which checkout to modify. Pass the absolute path of the target repository.`,
     );
   }
   const prompt = composeImplementPrompt(input);
-  const codex = await runCodex({
-    tool: 'codex_implement',
+  const codex = await runCli(provider, {
+    tool: `${providerId}_implement`,
     prompt,
     cwd: input.working_directory,
     sandbox: input.approval_mode ?? 'workspace-write',
     skipGitCheck: false,
+    model: input.model,
+    reasoningEffort: input.reasoning_effort,
     timeoutMs: input.timeout_ms,
   });
-  // Always probe the workspace afterwards, even on Codex failure: a partial
-  // run may still have edited files the caller needs to know about.
+  // Always probe the workspace afterwards, even on failure: a partial run may
+  // still have edited files the caller needs to know about.
   const { filesChanged, diffStat } = await captureGitDelta(input.working_directory);
   return { codex, filesChanged, diffStat };
 }
