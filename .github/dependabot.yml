@@ -7,11 +7,20 @@ updates:
     open-pull-requests-limit: 5
     groups:
       dev-deps:
+        applies-to: version-updates
         dependency-type: development
         update-types: [minor, patch]
       prod-deps:
+        applies-to: version-updates
         dependency-type: production
         update-types: [minor, patch]
+      # Security updates ignore the groups above unless a group explicitly
+      # opts in with applies-to: security-updates. Without this, every advisory
+      # opens its own PR; the SDK's unused HTTP-transport dependency tree
+      # (hono, express, ajv) alone produced 15 at once.
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
